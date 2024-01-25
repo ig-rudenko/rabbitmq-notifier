@@ -144,9 +144,10 @@ func (c *Consumer) closedConnectionListener(closed <-chan *amqp.Error) {
 // running. All consumers operate in a round robin fashion to distribute
 // message load.
 func (c *Consumer) consume(channel *amqp.Channel, id int) {
+	consumerName := fmt.Sprintf("%s (%d/%d)", c.config.ConsumerName, id, c.config.ConsumerCount)
 	msgs, err := channel.Consume(
 		c.config.QueueName,
-		fmt.Sprintf("%s (%d/%d)", c.config.ConsumerName, id, c.config.ConsumerCount),
+		consumerName,
 		false,
 		false,
 		false,
@@ -159,17 +160,17 @@ func (c *Consumer) consume(channel *amqp.Channel, id int) {
 		return
 	}
 
-	log.Println("[", id, "] Running ...")
-	log.Println("[", id, "] Press CTRL+C to exit ...")
+	log.Println("[", consumerName, "] Running ...")
+	log.Println("[", consumerName, "] Press CTRL+C to exit ...")
 
 	for msg := range msgs {
-		log.Println("[", id, "] Consumed:", string(msg.Body))
+		log.Println("[", consumerName, "] Consumed:", string(msg.Body))
 
 		if err := msg.Ack(false); err != nil {
-			// TODO: Should DLX the message
-			log.Println("unable to acknowledge the message, dropped", err)
+
+			log.Println("Unable to acknowledge the message, dropped", err)
 		}
 	}
 
-	log.Println("[", id, "] Exiting ...")
+	log.Println("[", consumerName, "] Exiting ...")
 }

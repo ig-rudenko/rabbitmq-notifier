@@ -3,3 +3,5 @@ rabbitmq
 rabbitmq-settings/client.*
 rabbitmq-settings/server.*
 rabbitmq-settings/root.*
+
+*.drawio.bkp

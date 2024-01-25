@@ -49,5 +49,5 @@ bash rabbit-settings/create-certs.sh 'rabbitHost' 'rabbitUser';
     RABBITMQ_EXCHANGE_TYPE="direct"     # Тип обменника
     RABBITMQ_ROUTING_KEY                # Ключ маршрутизации
     RABBITMQ_QUEUE                      # Очередь для подключения
-    CONSUMER_COUNT="3"
-    PREFETCH_COUNT="1"
+    CONSUMER_COUNT="5"                  # Кол-во одновременных подписчиков
+    PREFETCH_COUNT="5"                  # Кол-во неподтверждённых сообщений одновременно

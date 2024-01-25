@@ -31,8 +31,8 @@ func main() {
 		RoutingKey:    misc.GetEnvOrPanic("RABBITMQ_ROUTING_KEY"),
 		QueueName:     misc.GetEnvOrPanic("RABBITMQ_QUEUE"),
 		ConsumerName:  misc.GetEnvOrPanic("RABBITMQ_CONNECTION_NAME"),
-		ConsumerCount: misc.GetIntEnv("CONSUMER_COUNT", 3),
-		PrefetchCount: misc.GetIntEnv("PREFETCH_COUNT", 1),
+		ConsumerCount: misc.GetIntEnv("CONSUMER_COUNT", 5),
+		PrefetchCount: misc.GetIntEnv("PREFETCH_COUNT", 5),
 	}
 	cc.Reconnect.MaxAttempt = 60
 	cc.Reconnect.Interval = 1 * time.Second
