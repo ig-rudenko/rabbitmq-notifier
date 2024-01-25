@@ -1,0 +1,25 @@
+version: "2.2"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.12.12-management-alpine
+    hostname: rabbitmq
+    restart: always
+    mem_limit: 1g
+    cpu_count: 4
+    cpus: 0.5
+#    extra_hosts:
+#      - "data.noc.sevtelecom.loc:"
+    environment:
+      - RABBITMQ_DEFAULT_USER=rmuser
+      - RABBITMQ_DEFAULT_PASS=rmpassword
+      - RABBITMQ_SERVER_ADDITIONAL_ERL_ARGS=-rabbit log_levels [{connection,error},{default,error}] disk_free_limit 2147483648
+    volumes:
+      - ./rabbitmq:/var/lib/rabbitmq
+      - ./rabbitmq-settings/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      - ./rabbitmq-settings/root.crt:/etc/ssl/rmq-cacert.pem:ro
+      - ./rabbitmq-settings/server.crt:/etc/ssl/rmq-cert.pem:ro
+      - ./rabbitmq-settings/server.key:/etc/ssl/rmq-key.pem:ro
+    ports:
+      - "15672:15672"
+      - "5671:5671"
