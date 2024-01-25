@@ -9,11 +9,11 @@ import (
 
 func main() {
 	// RabbitMQ
-	rc := rabbitmq.RabbitConfig{
-		Schema:         "amqp",
+	rc := rabbitmq.Config{
+		Schema:         "amqps",
 		Username:       "rmuser",
 		Password:       "rmpassword",
-		Host:           "10.29.29.33",
+		Host:           "data.noc.sevtelecom.loc",
 		Port:           "5671",
 		VHost:          "",
 		ConnectionName: "my_app_name",
@@ -22,10 +22,9 @@ func main() {
 	if err := rbt.Connect(); err != nil {
 		log.Fatalln("unable to connect to rabbit", err)
 	}
-	//
 
 	// Consumer
-	cc := consumer.ConsumerConfig{
+	cc := consumer.Config{
 		ExchangeName:  "user",
 		ExchangeType:  "direct",
 		RoutingKey:    "create",

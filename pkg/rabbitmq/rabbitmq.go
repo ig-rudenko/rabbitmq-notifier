@@ -1,12 +1,15 @@
 package rabbitmq
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
+	"os"
 )
 
-type RabbitConfig struct {
+type Config struct {
 	Schema         string
 	Username       string
 	Password       string
@@ -17,12 +20,12 @@ type RabbitConfig struct {
 }
 
 type Rabbit struct {
-	config     RabbitConfig
+	config     Config
 	connection *amqp.Connection
 }
 
 // NewRabbit returns a RabbitMQ instance.
-func NewRabbit(config RabbitConfig) *Rabbit {
+func NewRabbit(config Config) *Rabbit {
 	return &Rabbit{
 		config: config,
 	}
@@ -30,8 +33,30 @@ func NewRabbit(config RabbitConfig) *Rabbit {
 
 // Connect connects to RabbitMQ server.
 func (r *Rabbit) Connect() error {
+
+	caCert, err := os.ReadFile("./rabbitmq-settings/root.crt")
+	if err != nil {
+		return err
+	}
+
+	cert, err := tls.LoadX509KeyPair(
+		"./rabbitmq-settings/client.crt",
+		"./rabbitmq-settings/client.key",
+	)
+	if err != nil {
+		return err
+	}
+
+	rootCAs := x509.NewCertPool()
+	rootCAs.AppendCertsFromPEM(caCert)
+	tlsConf := &tls.Config{
+		RootCAs:      rootCAs,
+		Certificates: []tls.Certificate{cert},
+		ServerName:   "data.noc.sevtelecom.loc",
+	}
+
 	if r.connection == nil || r.connection.IsClosed() {
-		con, err := amqp.DialConfig(fmt.Sprintf(
+		con, err := amqp.DialTLS(fmt.Sprintf(
 			"%s://%s:%s@%s:%s/%s",
 			r.config.Schema,
 			r.config.Username,
@@ -39,7 +64,7 @@ func (r *Rabbit) Connect() error {
 			r.config.Host,
 			r.config.Port,
 			r.config.VHost,
-		), amqp.Config{Properties: amqp.Table{"connection_name": r.config.ConnectionName}})
+		), tlsConf)
 		if err != nil {
 			return err
 		}

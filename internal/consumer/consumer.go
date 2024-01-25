@@ -2,14 +2,14 @@ package consumer
 
 import (
 	"fmt"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"log"
 	"multiple-notifier/pkg/rabbitmq"
 	"os"
 	"time"
 )
 
-type ConsumerConfig struct {
+type Config struct {
 	ExchangeName  string
 	ExchangeType  string
 	RoutingKey    string
@@ -24,12 +24,12 @@ type ConsumerConfig struct {
 }
 
 type Consumer struct {
-	config ConsumerConfig
+	config Config
 	Rabbit *rabbitmq.Rabbit
 }
 
 // NewConsumer returns a consumer instance.
-func NewConsumer(config ConsumerConfig, rabbit *rabbitmq.Rabbit) *Consumer {
+func NewConsumer(config Config, rabbit *rabbitmq.Rabbit) *Consumer {
 	return &Consumer{
 		config: config,
 		Rabbit: rabbit,
