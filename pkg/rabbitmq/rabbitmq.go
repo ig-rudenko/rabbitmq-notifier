@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"multiple-notifier/internal/misc"
 	"os"
 )
 
@@ -34,14 +35,14 @@ func NewRabbit(config Config) *Rabbit {
 // Connect connects to RabbitMQ server.
 func (r *Rabbit) Connect() error {
 
-	caCert, err := os.ReadFile("./rabbitmq-settings/root.crt")
+	caCert, err := os.ReadFile(misc.GetEnvOrPanic("CACERT"))
 	if err != nil {
 		return err
 	}
 
 	cert, err := tls.LoadX509KeyPair(
-		"./rabbitmq-settings/client.crt",
-		"./rabbitmq-settings/client.key",
+		misc.GetEnvOrPanic("CERTFILE"),
+		misc.GetEnvOrPanic("KEYFILE"),
 	)
 	if err != nil {
 		return err
@@ -52,7 +53,7 @@ func (r *Rabbit) Connect() error {
 	tlsConf := &tls.Config{
 		RootCAs:      rootCAs,
 		Certificates: []tls.Certificate{cert},
-		ServerName:   "data.noc.sevtelecom.loc",
+		ServerName:   misc.GetEnvOrPanic("RABBITMQ_HOST"),
 	}
 
 	if r.connection == nil || r.connection.IsClosed() {

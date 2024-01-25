@@ -1,6 +1,6 @@
 ## Настройка
 
-## Создание сертификатов
+### Создание сертификатов
 
 
 Для работы библиотеки x509 необходимо настроить `subjectAltName`. Для этого добавьте в файл `/etc/ssl/openssl.conf`
@@ -27,3 +27,27 @@ subjectAltName = @alt_names
 ```shell
 bash rabbit-settings/create-certs.sh 'rabbitHost' 'rabbitUser';
 ```
+
+### Переменные окружения
+
+Для работы приложения требуются перменные окружения.
+Необязательные переменные уже имеют значения.
+
+
+    CACERT         # root cert
+    CERTFILE       # client cert
+    KEYFILE        # client key
+
+    RABBITMQ_USER
+    RABBITMQ_PASS
+    RABBITMQ_HOST
+    RABBITMQ_PORT="5671"
+    RABBITMQ_VHOST=""
+
+    RABBITMQ_CONNECTION_NAME            # Название подписчика
+    RABBITMQ_EXCHANGE_NAME              # Название точки обмена
+    RABBITMQ_EXCHANGE_TYPE="direct"     # Тип обменника
+    RABBITMQ_ROUTING_KEY                # Ключ маршрутизации
+    RABBITMQ_QUEUE                      # Очередь для подключения
+    CONSUMER_COUNT="3"
+    PREFETCH_COUNT="1"
