@@ -4,7 +4,9 @@ import (
 	"log"
 	"multiple-notifier/internal/consumer"
 	"multiple-notifier/internal/misc"
+	"multiple-notifier/internal/notifier/telegram"
 	"multiple-notifier/pkg/rabbitmq"
+	"os"
 	"time"
 )
 
@@ -36,6 +38,9 @@ func main() {
 	}
 	cc.Reconnect.MaxAttempt = 60
 	cc.Reconnect.Interval = 1 * time.Second
+
+	cc.Notifier = getNotifier()
+
 	csm := consumer.NewConsumer(cc, rbt)
 	if err := csm.Start(); err != nil {
 		log.Fatalln("unable to start consumer", err)
@@ -43,4 +48,11 @@ func main() {
 	//
 
 	select {}
+}
+
+func getNotifier() consumer.Notifier {
+	if os.Args[1] == "telegram" {
+		return telegram.NewNotifier(misc.GetEnvOrPanic("TELEGRAM_TOKEN"), misc.GetEnvOrPanic("TELEGRAM_CHAT_ID"))
+	}
+	return nil
 }

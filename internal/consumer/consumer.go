@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+type Notifier interface {
+	Send(message amqp.Delivery)
+}
+
 type Config struct {
 	ExchangeName  string
 	ExchangeType  string
@@ -21,6 +25,7 @@ type Config struct {
 		MaxAttempt int
 		Interval   time.Duration
 	}
+	Notifier Notifier
 }
 
 type Consumer struct {
@@ -165,6 +170,8 @@ func (c *Consumer) consume(channel *amqp.Channel, id int) {
 
 	for msg := range msgs {
 		log.Println("[", consumerName, "] Consumed:", string(msg.Body))
+
+		c.config.Notifier.Send(msg)
 
 		if err := msg.Ack(false); err != nil {
 
