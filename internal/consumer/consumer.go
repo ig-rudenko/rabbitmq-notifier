@@ -10,7 +10,7 @@ import (
 )
 
 type Notifier interface {
-	Send(message amqp.Delivery)
+	ProcessMessage(delivery *amqp.Delivery) bool
 }
 
 type Config struct {
@@ -170,13 +170,7 @@ func (c *Consumer) consume(channel *amqp.Channel, id int) {
 
 	for msg := range msgs {
 		log.Println("[", consumerName, "] Consumed:", string(msg.Body))
-
-		c.config.Notifier.Send(msg)
-
-		if err := msg.Ack(false); err != nil {
-
-			log.Println("Unable to acknowledge the message, dropped", err)
-		}
+		c.config.Notifier.ProcessMessage(&msg)
 	}
 
 	log.Println("[", consumerName, "] Exiting ...")

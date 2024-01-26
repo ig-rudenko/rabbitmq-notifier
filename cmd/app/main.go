@@ -43,16 +43,15 @@ func main() {
 
 	csm := consumer.NewConsumer(cc, rbt)
 	if err := csm.Start(); err != nil {
-		log.Fatalln("unable to start consumer", err)
+		log.Fatalln("Unable to start consumer!", err)
 	}
-	//
 
 	select {}
 }
 
 func getNotifier() consumer.Notifier {
 	if os.Args[1] == "telegram" {
-		return telegram.NewNotifier(misc.GetEnvOrPanic("TELEGRAM_TOKEN"), misc.GetEnvOrPanic("TELEGRAM_CHAT_ID"))
+		return telegram.NewNotifier()
 	}
-	return nil
+	panic("Неверный тип notifier")
 }
