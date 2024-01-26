@@ -37,7 +37,7 @@ type Config struct {
 }
 
 func NewConfig() *Config {
-	configFilePath := misc.GetEnv("CONFIG_FILE", "./config.json")
+	configFilePath := misc.GetEnv("CONFIG_FILE", "/etc/rmq-notifier/config.json")
 	file, _ := os.Open(configFilePath)
 	defer func(file *os.File) {
 		_ = file.Close()

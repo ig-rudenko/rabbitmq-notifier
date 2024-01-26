@@ -33,7 +33,7 @@ bash rabbit-settings/create-certs.sh 'rabbitHost' 'rabbitUser';
 Для работы приложения требуется настроить файл конфигурации `config.json`.
 
 Через переменную окружения `CONFIG_FILE` можно указать где искать файл конфигурации,
-по умолчанию - `./config.json`
+по умолчанию - `/etc/rmq-notifier/config.json`
 
 ## Запуск
 
@@ -64,3 +64,18 @@ notifier consumer telegram
 - параметр `consumer` запускает приложения для приема сообщений;
 - `telegram` это тип уведомителя, который должен обработать сообщение.
 Доступны: `telegram`, `sms`, `email`.
+
+Для уведомителя `telegram` тело сообщения должно быть JSON в формате:
+
+```json
+{ 
+  "chatId": 123123123,
+  "message": "hello", 
+  "parseMode": "MarkdownV2",
+  "token": "****"
+}
+```
+
+## Схема работы
+
+![schema.png](docs/img/schema.png)

@@ -18,8 +18,6 @@ func main() {
 
 	mainConfig := config.NewConfig()
 
-	fmt.Println(mainConfig)
-
 	// RabbitMQ
 	rc := rabbitmq.Config{
 		Schema:     "amqps",

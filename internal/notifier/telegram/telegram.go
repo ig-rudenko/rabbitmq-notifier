@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"multiple-notifier/internal/misc"
 	"net/http"
 	"strconv"
 )
@@ -25,7 +26,9 @@ func NewNotifier() *Notifier {
 
 func (n *Notifier) ProcessMessage(delivery *amqp.Delivery) bool {
 	var messageData MessageData
-	err := json.Unmarshal(delivery.Body, &messageData)
+	cleanedJson := misc.JsonEscape(string(delivery.Body))
+
+	err := json.Unmarshal([]byte(cleanedJson), &messageData)
 	if err != nil {
 		// Неверный формат сообщения.
 		fmt.Println("TelegramNotifier | Неверный формат сообщения ", err, delivery)
@@ -52,6 +55,7 @@ func (n *Notifier) ProcessMessage(delivery *amqp.Delivery) bool {
 		// Неверный статус код отправки телеграм сообщения.
 		n.negativeAcknowledgeDelivery(delivery)
 		fmt.Println("TelegramNotifier | Проблема отправки телеграм сообщения. StatusCode: ", res.Status)
+		defer res.Body.Close()
 		return false
 	} else {
 		// Отправка успешна.
@@ -70,6 +74,11 @@ func (n *Notifier) acknowledgeDelivery(delivery *amqp.Delivery) {
 }
 
 func (n *Notifier) negativeAcknowledgeDelivery(delivery *amqp.Delivery) {
+	if delivery.Redelivered {
+		// Если сообщение уже второй раз обрабатывалось, то не даем ему бесконечно находиться в очереди.
+		n.acknowledgeDelivery(delivery)
+		return
+	}
 	err := delivery.Nack(false, true)
 	if err != nil {
 		fmt.Println("TelegramNotifier | Unable to requeue the message, dropped", err)
