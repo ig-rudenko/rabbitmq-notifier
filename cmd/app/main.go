@@ -1,57 +1,79 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"multiple-notifier/internal/config"
 	"multiple-notifier/internal/consumer"
-	"multiple-notifier/internal/misc"
-	"multiple-notifier/internal/notifier/telegram"
+	"multiple-notifier/internal/mode"
+	"multiple-notifier/internal/producer"
 	"multiple-notifier/pkg/rabbitmq"
 	"os"
 	"time"
 )
 
 func main() {
+	app := mode.NewApp()
+	app.ParseArgs()
+
+	mainConfig := config.NewConfig()
+
+	fmt.Println(mainConfig)
+
 	// RabbitMQ
 	rc := rabbitmq.Config{
 		Schema:         "amqps",
-		Username:       misc.GetEnvOrPanic("RABBITMQ_USER"),
-		Password:       misc.GetEnvOrPanic("RABBITMQ_PASS"),
-		Host:           misc.GetEnvOrPanic("RABBITMQ_HOST"),
-		Port:           misc.GetEnv("RABBITMQ_PORT", "5671"),
-		VHost:          misc.GetEnv("RABBITMQ_VHOST", ""),
-		ConnectionName: misc.GetEnvOrPanic("RABBITMQ_CONNECTION_NAME"),
+		Username:       mainConfig.RabbitmqUser,
+		Password:       mainConfig.RabbitmqPass,
+		Host:           mainConfig.RabbitmqHost,
+		Port:           mainConfig.RabbitmqPort,
+		VHost:          mainConfig.RabbitmqVhost,
+		ConnectionName: mainConfig.RabbitmqConnectionName,
+		CaCertFile:     mainConfig.CaCert,
+		CertFile:       mainConfig.CertFile,
+		KeyFile:        mainConfig.KeyFile,
 	}
 	rbt := rabbitmq.NewRabbit(rc)
 	if err := rbt.Connect(); err != nil {
-		log.Fatalln("unable to connect to rabbit", err)
+		log.Fatalln("Unable to connect to rabbit", err)
 	}
 
 	// Consumer
-	cc := consumer.Config{
-		ExchangeName:  misc.GetEnvOrPanic("RABBITMQ_EXCHANGE_NAME"),
-		ExchangeType:  misc.GetEnv("RABBITMQ_EXCHANGE_TYPE", "direct"),
-		RoutingKey:    misc.GetEnvOrPanic("RABBITMQ_ROUTING_KEY"),
-		QueueName:     misc.GetEnvOrPanic("RABBITMQ_QUEUE"),
-		ConsumerName:  misc.GetEnvOrPanic("RABBITMQ_CONNECTION_NAME"),
-		ConsumerCount: misc.GetIntEnv("CONSUMER_COUNT", 5),
-		PrefetchCount: misc.GetIntEnv("PREFETCH_COUNT", 5),
+	if app.IsConsumerMode() {
+		cc := consumer.Config{
+			ExchangeName:  mainConfig.RabbitmqExchangeName,
+			ExchangeType:  mainConfig.RabbitmqExchangeType,
+			RoutingKey:    mainConfig.RabbitmqRoutingKey,
+			QueueName:     mainConfig.RabbitmqQueue,
+			ConsumerName:  mainConfig.RabbitmqConnectionName,
+			ConsumerCount: mainConfig.ConsumerCount,
+			PrefetchCount: mainConfig.PrefetchCount,
+		}
+		cc.Reconnect.MaxAttempt = 60
+		cc.Reconnect.Interval = 1 * time.Second
+
+		cc.Notifier = app.GetNotifier()
+
+		csm := consumer.NewConsumer(cc, rbt)
+		if err := csm.Start(); err != nil {
+			log.Fatalln("Unable to start consumer!", err)
+		}
+		select {}
+
 	}
-	cc.Reconnect.MaxAttempt = 60
-	cc.Reconnect.Interval = 1 * time.Second
 
-	cc.Notifier = getNotifier()
+	// Producer
+	if app.IsProducerMode() {
+		pc := producer.Config{
+			ExchangeName: mainConfig.RabbitmqExchangeName,
+			ExchangeType: mainConfig.RabbitmqExchangeType,
+		}
 
-	csm := consumer.NewConsumer(cc, rbt)
-	if err := csm.Start(); err != nil {
-		log.Fatalln("Unable to start consumer!", err)
+		prd := producer.NewProducer(pc, rbt)
+		if err := prd.Send(app.GetRoutingKey(), app.GetMessage()); err != nil {
+			fmt.Println("Ошибка отправки сообщения", app.GetMessage(), err)
+			os.Exit(1)
+		}
 	}
 
-	select {}
-}
-
-func getNotifier() consumer.Notifier {
-	if os.Args[1] == "telegram" {
-		return telegram.NewNotifier()
-	}
-	panic("Неверный тип notifier")
 }

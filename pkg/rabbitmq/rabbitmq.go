@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"multiple-notifier/internal/misc"
 	"os"
 )
 
@@ -15,9 +14,12 @@ type Config struct {
 	Username       string
 	Password       string
 	Host           string
-	Port           string
+	Port           int
 	VHost          string
 	ConnectionName string
+	CaCertFile     string
+	CertFile       string
+	KeyFile        string
 }
 
 type Rabbit struct {
@@ -35,15 +37,12 @@ func NewRabbit(config Config) *Rabbit {
 // Connect connects to RabbitMQ server.
 func (r *Rabbit) Connect() error {
 
-	caCert, err := os.ReadFile(misc.GetEnvOrPanic("CACERT"))
+	caCert, err := os.ReadFile(r.config.CaCertFile)
 	if err != nil {
 		return err
 	}
 
-	cert, err := tls.LoadX509KeyPair(
-		misc.GetEnvOrPanic("CERTFILE"),
-		misc.GetEnvOrPanic("KEYFILE"),
-	)
+	cert, err := tls.LoadX509KeyPair(r.config.CertFile, r.config.KeyFile)
 	if err != nil {
 		return err
 	}
@@ -53,12 +52,12 @@ func (r *Rabbit) Connect() error {
 	tlsConf := &tls.Config{
 		RootCAs:      rootCAs,
 		Certificates: []tls.Certificate{cert},
-		ServerName:   misc.GetEnvOrPanic("RABBITMQ_HOST"),
+		ServerName:   r.config.Host,
 	}
 
 	if r.connection == nil || r.connection.IsClosed() {
 		con, err := amqp.DialTLS(fmt.Sprintf(
-			"%s://%s:%s@%s:%s/%s",
+			"%s://%s:%s@%s:%d/%s",
 			r.config.Schema,
 			r.config.Username,
 			r.config.Password,
