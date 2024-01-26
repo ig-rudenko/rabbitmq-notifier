@@ -4,4 +4,7 @@ rabbitmq-settings/client.*
 rabbitmq-settings/server.*
 rabbitmq-settings/root.*
 
+dev-config.json
+prod-config.json
+
 *.drawio.bkp

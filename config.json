@@ -1,0 +1,23 @@
+{
+  "rabbitmq": {
+    "user": "user",
+    "password": "password",
+    "host": "domain",
+    "port": 5671,
+    "vhost": "",
+    "cacert": "./rabbitmq-settings/root.crt",
+    "certFile": "./rabbitmq-settings/client.crt",
+    "keyFile": "./rabbitmq-settings/client.key"
+  },
+  "exchange": {
+    "name": "exchangeName",
+    "type": "direct"
+  },
+  "consumer": {
+    "connectionName": "consumerName",
+    "routingKey": "key",
+    "queue": "queueName",
+    "count": 5,
+    "prefetchCount": 5
+  }
+}

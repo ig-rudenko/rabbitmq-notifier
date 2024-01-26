@@ -28,26 +28,39 @@ subjectAltName = @alt_names
 bash rabbit-settings/create-certs.sh 'rabbitHost' 'rabbitUser';
 ```
 
-### Переменные окружения
+### Файл конфигурации
 
-Для работы приложения требуются перменные окружения.
-Необязательные переменные уже имеют значения.
+Для работы приложения требуется настроить файл конфигурации `config.json`.
+
+Через переменную окружения `CONFIG_FILE` можно указать где искать файл конфигурации,
+по умолчанию - `./config.json`
+
+## Запуск
 
 
-    CACERT         # root cert
-    CERTFILE       # client cert
-    KEYFILE        # client key
+### Отправка через producer
 
-    RABBITMQ_USER
-    RABBITMQ_PASS
-    RABBITMQ_HOST
-    RABBITMQ_PORT="5671"
-    RABBITMQ_VHOST=""
+Для запуска **producer** необходимо обязательно указать в файле конфигурации все значения для блока `rabbitmq` и `exchange`.
 
-    RABBITMQ_CONNECTION_NAME            # Название подписчика
-    RABBITMQ_EXCHANGE_NAME              # Название точки обмена
-    RABBITMQ_EXCHANGE_TYPE="direct"     # Тип обменника
-    RABBITMQ_ROUTING_KEY                # Ключ маршрутизации
-    RABBITMQ_QUEUE                      # Очередь для подключения
-    CONSUMER_COUNT="5"                  # Кол-во одновременных подписчиков
-    PREFETCH_COUNT="5"                  # Кол-во неподтверждённых сообщений одновременно
+```shell
+notifier producer tg '{"chatId":123123, "message":"hello", "parseMode":"MarkdownV2", "token":"672364"}'
+```
+
+- параметр `producer` запускает приложение для отправки сообщения;
+- `tg` это routingKey, который будет указан в сообщении;
+- последний параметр это тело сообщения в формате JSON. 
+Для обработки далее этого сообщения через `consumer` необходим JSON именно с такой структурой.
+
+
+### Обработка через consumer
+
+Для запуска **consumer** должны быть указаны все значения в файле конфигурации
+
+
+```shell
+notifier consumer telegram
+```
+
+- параметр `consumer` запускает приложения для приема сообщений;
+- `telegram` это тип уведомителя, который должен обработать сообщение.
+Доступны: `telegram`, `sms`, `email`.

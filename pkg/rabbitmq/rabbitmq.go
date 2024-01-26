@@ -10,16 +10,15 @@ import (
 )
 
 type Config struct {
-	Schema         string
-	Username       string
-	Password       string
-	Host           string
-	Port           int
-	VHost          string
-	ConnectionName string
-	CaCertFile     string
-	CertFile       string
-	KeyFile        string
+	Schema     string
+	Username   string
+	Password   string
+	Host       string
+	Port       int
+	VHost      string
+	CaCertFile string
+	CertFile   string
+	KeyFile    string
 }
 
 type Rabbit struct {
