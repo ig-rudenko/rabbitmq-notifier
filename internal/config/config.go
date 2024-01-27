@@ -2,6 +2,8 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"multiple-notifier/internal/misc"
 	"os"
 )
@@ -39,6 +41,11 @@ type Config struct {
 
 func NewConfig() *Config {
 	configFilePath := misc.GetEnv("CONFIG_FILE", "/etc/rmq-notifier/config.json")
+	if _, err := os.Stat(configFilePath); errors.Is(err, os.ErrNotExist) {
+		fmt.Println("Config file " + configFilePath + " does not exist")
+		os.Exit(1)
+	}
+
 	file, _ := os.Open(configFilePath)
 	defer func(file *os.File) {
 		_ = file.Close()
@@ -56,14 +63,14 @@ func NewConfig() *Config {
 			Type: "direct",
 		},
 		Consumer: ConsumerConfig{
-			Count:              5,
-			PrefetchCount:      5,
-			ExpireAfterSeconds: 0,
+			Count:         5,
+			PrefetchCount: 5,
 		},
 	}
 
 	if err := decoder.Decode(&configuration); err != nil {
-		panic(err)
+		fmt.Println("INVALID CONFIG FILE", err)
+		os.Exit(1)
 	}
 	return &configuration
 }
