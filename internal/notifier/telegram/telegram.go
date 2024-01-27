@@ -8,9 +8,11 @@ import (
 	"multiple-notifier/internal/misc"
 	"net/http"
 	"strconv"
+	"time"
 )
 
 type Notifier struct {
+	ExpireAfterSeconds uint64
 }
 
 type MessageData struct {
@@ -20,11 +22,16 @@ type MessageData struct {
 	Token     string `json:"token"`
 }
 
-func NewNotifier() *Notifier {
-	return &Notifier{}
+func NewNotifier(expireAfterSeconds uint64) *Notifier {
+	return &Notifier{expireAfterSeconds}
 }
 
 func (n *Notifier) ProcessMessage(delivery *amqp.Delivery) bool {
+	if n.ExpireAfterSeconds > 0 && delivery.Timestamp.Unix() < (time.Now().Unix()-int64(n.ExpireAfterSeconds)) {
+		n.acknowledgeDelivery(delivery)
+		return false
+	}
+
 	var messageData MessageData
 	cleanedJson := misc.JsonEscape(string(delivery.Body))
 

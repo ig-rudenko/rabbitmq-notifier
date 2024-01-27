@@ -16,7 +16,7 @@ DNS.4 = www.sub.example.com
 DNS.5 = mx.example.com
 DNS.6 = support.example.com
 
-[ v3-ca ]
+[ v3_ca ]
 # Подключаем
 subjectAltName = @alt_names
 ...

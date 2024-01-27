@@ -13,22 +13,21 @@ import (
 )
 
 func main() {
-	app := mode.NewApp()
-	app.ParseArgs()
-
 	mainConfig := config.NewConfig()
+	app := mode.NewApp(mainConfig)
+	app.ParseArgs()
 
 	// RabbitMQ
 	rc := rabbitmq.Config{
 		Schema:     "amqps",
-		Username:   mainConfig.Rabbitmq.User,
-		Password:   mainConfig.Rabbitmq.Password,
-		Host:       mainConfig.Rabbitmq.Host,
-		Port:       mainConfig.Rabbitmq.Port,
-		VHost:      mainConfig.Rabbitmq.Vhost,
-		CaCertFile: mainConfig.Rabbitmq.CaCert,
-		CertFile:   mainConfig.Rabbitmq.CertFile,
-		KeyFile:    mainConfig.Rabbitmq.KeyFile,
+		Username:   app.Config.Rabbitmq.User,
+		Password:   app.Config.Rabbitmq.Password,
+		Host:       app.Config.Rabbitmq.Host,
+		Port:       app.Config.Rabbitmq.Port,
+		VHost:      app.Config.Rabbitmq.Vhost,
+		CaCertFile: app.Config.Rabbitmq.CaCert,
+		CertFile:   app.Config.Rabbitmq.CertFile,
+		KeyFile:    app.Config.Rabbitmq.KeyFile,
 	}
 	rbt := rabbitmq.NewRabbit(rc)
 	if err := rbt.Connect(); err != nil {
@@ -38,13 +37,13 @@ func main() {
 	// Consumer
 	if app.IsConsumerMode() {
 		cc := consumer.Config{
-			ExchangeName:  mainConfig.Exchange.Name,
-			ExchangeType:  mainConfig.Exchange.Type,
-			RoutingKey:    mainConfig.Consumer.RoutingKey,
-			QueueName:     mainConfig.Consumer.Queue,
-			ConsumerName:  mainConfig.Consumer.ConnectionName,
-			ConsumerCount: mainConfig.Consumer.Count,
-			PrefetchCount: mainConfig.Consumer.PrefetchCount,
+			ExchangeName:  app.Config.Exchange.Name,
+			ExchangeType:  app.Config.Exchange.Type,
+			RoutingKey:    app.Config.Consumer.RoutingKey,
+			QueueName:     app.Config.Consumer.Queue,
+			ConsumerName:  app.Config.Consumer.ConnectionName,
+			ConsumerCount: app.Config.Consumer.Count,
+			PrefetchCount: app.Config.Consumer.PrefetchCount,
 		}
 		cc.Reconnect.MaxAttempt = 60
 		cc.Reconnect.Interval = 1 * time.Second
@@ -62,8 +61,8 @@ func main() {
 	// Producer
 	if app.IsProducerMode() {
 		pc := producer.Config{
-			ExchangeName: mainConfig.Exchange.Name,
-			ExchangeType: mainConfig.Exchange.Type,
+			ExchangeName: app.Config.Exchange.Name,
+			ExchangeType: app.Config.Exchange.Type,
 		}
 
 		prd := producer.NewProducer(pc, rbt)

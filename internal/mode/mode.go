@@ -2,6 +2,7 @@ package mode
 
 import (
 	"fmt"
+	"multiple-notifier/internal/config"
 	"multiple-notifier/internal/consumer"
 	"multiple-notifier/internal/notifier/telegram"
 	"os"
@@ -9,10 +10,11 @@ import (
 )
 
 type App struct {
+	Config *config.Config
 }
 
-func NewApp() *App {
-	return &App{}
+func NewApp(config *config.Config) *App {
+	return &App{config}
 }
 
 func (a *App) ParseArgs() {
@@ -54,7 +56,7 @@ func (a *App) ShowHelpText() {
 
 func (a *App) GetNotifier() consumer.Notifier {
 	if os.Args[2] == "telegram" {
-		return telegram.NewNotifier()
+		return telegram.NewNotifier(a.Config.Consumer.ExpireAfterSeconds)
 	}
 	panic("Неверный тип notifier")
 }

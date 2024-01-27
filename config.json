@@ -18,6 +18,7 @@
     "routingKey": "key",
     "queue": "queueName",
     "count": 5,
-    "prefetchCount": 5
+    "prefetchCount": 5,
+    "expireAfterSeconds": 0
   }
 }

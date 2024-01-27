@@ -23,11 +23,12 @@ type ExchangeConfig struct {
 }
 
 type ConsumerConfig struct {
-	RoutingKey     string `json:"routingKey"`
-	Queue          string `json:"queue"`
-	ConnectionName string `json:"connectionName"`
-	Count          int    `json:"count,omitempty"`
-	PrefetchCount  int    `json:"prefetchCount,omitempty"`
+	RoutingKey         string `json:"routingKey"`
+	Queue              string `json:"queue"`
+	ConnectionName     string `json:"connectionName"`
+	Count              int    `json:"count,omitempty"`
+	PrefetchCount      int    `json:"prefetchCount,omitempty"`
+	ExpireAfterSeconds uint64 `json:"expireAfterSeconds,omitempty"`
 }
 
 type Config struct {
@@ -55,8 +56,9 @@ func NewConfig() *Config {
 			Type: "direct",
 		},
 		Consumer: ConsumerConfig{
-			Count:         5,
-			PrefetchCount: 5,
+			Count:              5,
+			PrefetchCount:      5,
+			ExpireAfterSeconds: 0,
 		},
 	}
 
