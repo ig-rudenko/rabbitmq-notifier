@@ -49,6 +49,7 @@ func main() {
 		cc.Reconnect.Interval = 1 * time.Second
 
 		cc.Notifier = app.GetNotifier()
+		cc.Validate()
 
 		csm := consumer.NewConsumer(cc, rbt)
 		if err := csm.Start(); err != nil {

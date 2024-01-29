@@ -20,5 +20,8 @@
     "count": 5,
     "prefetchCount": 5,
     "expireAfterSeconds": 0
+  },
+  "producer": {
+    "authToken": "***************"
   }
 }

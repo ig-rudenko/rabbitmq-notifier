@@ -39,7 +39,7 @@ type ProducerConfig struct {
 
 type Config struct {
 	Rabbitmq RabbitMQConfig `json:"rabbitmq"`
-	Consumer ConsumerConfig `json:"consumer"`
+	Consumer ConsumerConfig `json:"consumer,omitempty"`
 	Exchange ExchangeConfig `json:"exchange"`
 	Producer ProducerConfig `json:"producer,omitempty"`
 }

@@ -45,6 +45,7 @@ func NewConsumer(config Config, rabbit *rabbitmq.Rabbit) *Consumer {
 // runs the consumers. This is called one at the application start up
 // or when consumer needs to reconnects to the server.
 func (c *Consumer) Start() error {
+
 	con, err := c.Rabbit.Connection()
 	if err != nil {
 		return err
@@ -175,4 +176,16 @@ func (c *Consumer) consume(channel *amqp.Channel, id int) {
 	}
 
 	log.Println("[", consumerName, "] Exiting ...")
+}
+
+func (c *Config) Validate() {
+	if len(c.QueueName) == 0 {
+		log.Fatalln("Укажите QueueName в конфигурации")
+	}
+	if len(c.ExchangeName) == 0 {
+		log.Fatalln("Укажите ExchangeName в конфигурации")
+	}
+	if len(c.RoutingKey) == 0 {
+		log.Fatalln("Укажите RoutingKey в конфигурации")
+	}
 }

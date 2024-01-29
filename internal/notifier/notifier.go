@@ -23,12 +23,13 @@ func (n *Notifier) IsDeliveryExpired(delivery *amqp.Delivery) bool {
 }
 
 func (n *Notifier) UnmarshallDelivery(d *amqp.Delivery, v any) bool {
-	decoder := json.NewDecoder(strings.NewReader(string(d.Body)))
+	body := string(d.Body)
+	decoder := json.NewDecoder(strings.NewReader(body))
 	decoder.UseNumber()
 	err := decoder.Decode(v)
 	if err != nil {
 		// Неверный формат сообщения.
-		log.Printf("%s | Неверный формат сообщения -> %e, %v\n", n.Name, err, d)
+		log.Printf("%s | Неверный формат сообщения -> %e, %v\n", n.Name, err, body)
 		// Закрываем сообщение, ведь его не получится уже обработать.
 		n.AcknowledgeDelivery(d)
 		return false
