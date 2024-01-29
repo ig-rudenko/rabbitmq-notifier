@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"multiple-notifier/internal/config"
 	"multiple-notifier/internal/consumer"
 	"multiple-notifier/internal/mode"
 	"multiple-notifier/internal/producer"
+	"multiple-notifier/internal/web"
 	"multiple-notifier/pkg/rabbitmq"
 	"os"
 	"time"
@@ -64,12 +64,14 @@ func main() {
 			ExchangeName: app.Config.Exchange.Name,
 			ExchangeType: app.Config.Exchange.Type,
 		}
-
 		prd := producer.NewProducer(pc, rbt)
-		if err := prd.Send(app.GetRoutingKey(), app.GetMessage()); err != nil {
-			fmt.Println("Ошибка отправки сообщения", app.GetMessage(), err)
-			os.Exit(1)
+		if err := prd.CreateExchange(); err != nil {
+			log.Fatalln("Не удалось создать exchange ->", err)
 		}
+
+		server := web.NewHttpServer(prd, app.Config.Producer.AuthToken)
+		address := os.Args[2]
+		server.Start(address)
 	}
 
 }

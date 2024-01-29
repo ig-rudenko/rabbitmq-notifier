@@ -42,9 +42,10 @@ func (n *Notifier) ProcessMessage(delivery *amqp.Delivery) bool {
 	if err := n.sendEmail(mailData); err != nil {
 		n.NegativeAcknowledgeDelivery(delivery)
 		return false
+	} else {
+		n.AcknowledgeDelivery(delivery)
+		return true
 	}
-
-	return true
 }
 
 func (n *Notifier) sendEmail(mailData Mail) error {

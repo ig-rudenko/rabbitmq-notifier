@@ -21,7 +21,7 @@ type Producer struct {
 	Rabbit *rabbitmq.Rabbit
 }
 
-func (p *Producer) Send(routingKey, data string) error {
+func (p *Producer) CreateExchange() error {
 	con, err := p.Rabbit.Connection()
 	if err != nil {
 		return err
@@ -31,6 +31,7 @@ func (p *Producer) Send(routingKey, data string) error {
 	if err != nil {
 		return err
 	}
+	defer chn.Close()
 
 	if err := chn.ExchangeDeclare(
 		p.config.ExchangeName,
@@ -43,12 +44,26 @@ func (p *Producer) Send(routingKey, data string) error {
 	); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (p *Producer) Send(routingKey string, data []byte) error {
+	con, err := p.Rabbit.Connection()
+	if err != nil {
+		return err
+	}
+
+	chn, err := con.Channel()
+	if err != nil {
+		return err
+	}
+	defer chn.Close()
 
 	msg := amqp.Publishing{
 		DeliveryMode: amqp.Persistent,
 		Timestamp:    time.Now(),
 		ContentType:  "application/json",
-		Body:         []byte(data),
+		Body:         data,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

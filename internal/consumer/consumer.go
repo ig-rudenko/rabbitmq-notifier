@@ -169,7 +169,8 @@ func (c *Consumer) consume(channel *amqp.Channel, id int) {
 	log.Println("[", consumerName, "] Press CTRL+C to exit ...")
 
 	for msg := range msgs {
-		log.Println("[", consumerName, "] Consumed:", string(msg.Body))
+		log.Printf("[ %s ] Consumed. RoutingKey: %s | Expiration: %s | Priority: %d",
+			consumerName, msg.RoutingKey, msg.Expiration, msg.Priority)
 		c.config.Notifier.ProcessMessage(&msg)
 	}
 

@@ -6,7 +6,7 @@ rabbitmq-settings/server.*
 rabbitmq-settings/root.*
 
 *.exe
-dev-config.json
+configs
 prod-config.json
 
 *.drawio.bkp

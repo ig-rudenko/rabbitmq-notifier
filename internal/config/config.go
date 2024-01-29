@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	"log"
 	"multiple-notifier/internal/misc"
 	"os"
 )
@@ -33,17 +33,21 @@ type ConsumerConfig struct {
 	ExpireAfterSeconds uint64 `json:"expireAfterSeconds,omitempty"`
 }
 
+type ProducerConfig struct {
+	AuthToken string `json:"authToken,omitempty"`
+}
+
 type Config struct {
 	Rabbitmq RabbitMQConfig `json:"rabbitmq"`
 	Consumer ConsumerConfig `json:"consumer"`
 	Exchange ExchangeConfig `json:"exchange"`
+	Producer ProducerConfig `json:"producer,omitempty"`
 }
 
 func NewConfig() *Config {
 	configFilePath := misc.GetEnv("CONFIG_FILE", "/etc/rmq-notifier/config.json")
 	if _, err := os.Stat(configFilePath); errors.Is(err, os.ErrNotExist) {
-		fmt.Println("Config file " + configFilePath + " does not exist")
-		os.Exit(1)
+		log.Fatalln("Config file " + configFilePath + " does not exist")
 	}
 
 	file, _ := os.Open(configFilePath)
@@ -65,11 +69,17 @@ func NewConfig() *Config {
 			Count:         5,
 			PrefetchCount: 5,
 		},
+		Producer: ProducerConfig{
+			AuthToken: "",
+		},
 	}
 
 	if err := decoder.Decode(&configuration); err != nil {
-		fmt.Println("INVALID CONFIG FILE", err)
-		os.Exit(1)
+		log.Fatalln("INVALID CONFIG FILE", err)
 	}
+
+	// Переопределяем через переменную окружения.
+	configuration.Producer.AuthToken = misc.GetEnv("PRODUCER_AUTH_TOKEN", configuration.Producer.AuthToken)
+
 	return &configuration
 }

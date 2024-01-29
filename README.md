@@ -1,6 +1,6 @@
-## Настройка
+## 1. Настройка
 
-### Создание сертификатов
+### 1.1. Создание сертификатов
 
 
 Для работы библиотеки x509 необходимо настроить `subjectAltName`. Для этого добавьте в файл `/etc/ssl/openssl.conf`
@@ -48,7 +48,7 @@ bash rabbit-settings/create-certs.sh 'rabbitHost' 'rabbitUser';
 
 Для подключения клиента - `root.crt`, `client.key`, `client.crt`.
 
-### Файл конфигурации
+### 1.2. Файл конфигурации
 
 Для работы приложения требуется настроить файл конфигурации `config.json`.
 
@@ -59,22 +59,42 @@ bash rabbit-settings/create-certs.sh 'rabbitHost' 'rabbitUser';
 пропущены и помечены как Acknowledge.
 
 
-## Запуск
+## 2. Запуск
 
-### Отправка через producer
+### 2.1. Отправка через producer
 
-Для запуска **producer** необходимо обязательно указать в файле конфигурации все значения для блока `rabbitmq` и `exchange`.
+Запускаем приложение на порту
 
 ```shell
-notifier producer tg '{"chatId":123123, "message":"hello", "parseMode":"MarkdownV2", "token":"672364"}'
+notifier producer 0.0.0.0:9090
 ```
 
-- параметр `producer` запускает приложение для отправки сообщения;
-- `tg` это routingKey, который будет указан в сообщении;
-- последний параметр это тело сообщения в формате JSON. Для обработки далее этого сообщения через `consumer`.
+Далее отправляем POST запрос на URL `/<routingKey>`. Пример на python:
 
+```python
+data = { 
+  "chatId": 123123123,
+  "message": "hello",
+  "parseMode": "MarkdownV2",
+  "token": "****",
+}
+routingKey = "telegram"  # Ключ маршрутизации
+resp = requests.post(
+    "http://localhost:9090/" + routingKey,
+    headers={"Authorization": "Token 834932789472389478923"},
+    json=data,
+)
+```
 
-### Обработка через consumer
+Каждый запрос должен содержать заголовок с токеном, который указан в файле конфигурации,
+либо через переменную окружения `PRODUCER_AUTH_TOKEN`
+```json
+"producer": {
+  "authToken": "834932789472389478923"
+}
+```
+
+### 2.2. Обработка через consumer
 
 Для запуска **consumer** должны быть указаны все значения в файле конфигурации
 
@@ -85,7 +105,9 @@ notifier consumer telegram
 
 - параметр `consumer` запускает приложения для приема сообщений;
 - `telegram` это тип уведомителя, который должен обработать сообщение.
-Доступны: `telegram`, `sms`, `email`.
+Доступны: `telegram`, `email`.
+
+### 2.2.1. Telegram
 
 Для уведомителя `telegram` тело сообщения должно быть JSON в формате:
 
@@ -98,6 +120,30 @@ notifier consumer telegram
 }
 ```
 
-## Схема работы
+### 2.2.2. Email
+
+Для уведомителя `email` тело сообщения должно быть JSON в формате:
+
+```json
+{
+  "sender": "user@mail.com",
+  "to": ["to-user@mail.ru"],
+  "subject": "test",
+  "body": "<h1>test</h1>"
+}
+```
+
+Для работы `email` уведомителя необходимо в файле конфигураций указать настройки для подключения:
+
+```json
+"emailNotifier": {
+    "host": "mail.domain",
+    "port": 587,
+    "login": "user",
+    "password": "password"
+}
+```
+
+## 3. Схема работы
 
 ![schema.png](docs/img/schema.png)

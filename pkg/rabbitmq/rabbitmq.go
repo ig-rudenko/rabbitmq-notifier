@@ -76,7 +76,7 @@ func (r *Rabbit) Connect() error {
 // Connection returns exiting `*amqp.Connection` instance.
 func (r *Rabbit) Connection() (*amqp.Connection, error) {
 	if r.connection == nil || r.connection.IsClosed() {
-		return nil, errors.New("connection is not open")
+		return nil, errors.New("connection to RabbitMQ is not open")
 	}
 
 	return r.connection, nil

@@ -2,6 +2,7 @@ package mode
 
 import (
 	"fmt"
+	"log"
 	"multiple-notifier/internal/config"
 	"multiple-notifier/internal/consumer"
 	"multiple-notifier/internal/notifier/email"
@@ -21,15 +22,12 @@ func NewApp(config *config.Config) *App {
 func (a *App) ParseArgs() {
 	if len(os.Args) < 2 || (os.Args[1] != "consumer" && os.Args[1] != "producer") {
 		a.ShowHelpText()
-		os.Exit(1)
 	}
-	if os.Args[1] == "consumer" && len(os.Args) < 3 && !slices.Contains([]string{"telegram", "email", "sms"}, os.Args[2]) {
+	if os.Args[1] == "consumer" && len(os.Args) < 3 && !slices.Contains([]string{"telegram", "email"}, os.Args[2]) {
 		a.ShowHelpText()
-		os.Exit(1)
 	}
-	if os.Args[1] == "producer" && len(os.Args) < 4 {
+	if os.Args[1] == "producer" && len(os.Args) < 3 {
 		a.ShowHelpText()
-		os.Exit(1)
 	}
 }
 
@@ -41,18 +39,10 @@ func (a *App) IsProducerMode() bool {
 	return os.Args[1] == "producer"
 }
 
-func (a *App) GetRoutingKey() string {
-	return os.Args[2]
-}
-
-func (a *App) GetMessage() string {
-	return os.Args[3]
-}
-
 func (a *App) ShowHelpText() {
 	fmt.Println("Для запуска необходимо передать параметр `consumer` или `producer`")
 	fmt.Println("    `consumer` требует также следующий параметр - тип уведомителя. Доступны `telegram` `email` и `sms`.")
-	fmt.Println("    `producer` требует также следующие параметры - RoutingKey и JSON строку тела сообщения")
+	log.Fatalln("    `producer` требует также следующий параметр - address, в формате 0.0.0.0:5555")
 }
 
 func (a *App) GetNotifier() consumer.Notifier {
@@ -62,5 +52,7 @@ func (a *App) GetNotifier() consumer.Notifier {
 	if os.Args[2] == "email" {
 		return email.NewNotifier(a.Config.Consumer.ExpireAfterSeconds)
 	}
-	panic("Неверный тип notifier")
+
+	log.Fatalln("Неверный тип notifier")
+	return nil
 }

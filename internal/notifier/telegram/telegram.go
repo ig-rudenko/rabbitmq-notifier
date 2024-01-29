@@ -3,8 +3,8 @@ package telegram
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"log"
 	"multiple-notifier/internal/notifier"
 	"net/http"
 	"strconv"
@@ -52,17 +52,17 @@ func (n *Notifier) ProcessMessage(delivery *amqp.Delivery) bool {
 	if err != nil {
 		// Ошибка отправки телеграм сообщения.
 		n.NegativeAcknowledgeDelivery(delivery)
-		fmt.Printf("%s | Ошибка отправки телеграм сообщения. -> %e\n", n.Name, err)
+		log.Printf("%s | Ошибка отправки телеграм сообщения. -> %e\n", n.Name, err)
 		return false
 	} else if res.StatusCode != 200 {
 		// Неверный статус код отправки телеграм сообщения.
 		n.NegativeAcknowledgeDelivery(delivery)
-		fmt.Printf("%s | Проблема отправки телеграм сообщения. %s\n", n.Name, res.Status)
+		log.Printf("%s | Проблема отправки телеграм сообщения. %s\n", n.Name, res.Status)
 		defer res.Body.Close()
 		return false
 	} else {
 		// Отправка успешна.
-		fmt.Println(res.Status)
+		log.Println(res.Status)
 		n.AcknowledgeDelivery(delivery)
 		defer res.Body.Close()
 		return true
