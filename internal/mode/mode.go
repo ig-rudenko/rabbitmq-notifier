@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"multiple-notifier/internal/config"
 	"multiple-notifier/internal/consumer"
+	"multiple-notifier/internal/notifier/email"
 	"multiple-notifier/internal/notifier/telegram"
 	"os"
 	"slices"
@@ -57,6 +58,9 @@ func (a *App) ShowHelpText() {
 func (a *App) GetNotifier() consumer.Notifier {
 	if os.Args[2] == "telegram" {
 		return telegram.NewNotifier(a.Config.Consumer.ExpireAfterSeconds)
+	}
+	if os.Args[2] == "email" {
+		return email.NewNotifier(a.Config.Consumer.ExpireAfterSeconds)
 	}
 	panic("Неверный тип notifier")
 }

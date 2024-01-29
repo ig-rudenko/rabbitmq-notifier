@@ -52,7 +52,6 @@ func NewConfig() *Config {
 	}(file)
 
 	decoder := json.NewDecoder(file)
-	decoder.DisallowUnknownFields()
 
 	configuration := Config{
 		Rabbitmq: RabbitMQConfig{
