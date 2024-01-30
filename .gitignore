@@ -10,3 +10,4 @@ configs
 prod-config.json
 
 *.drawio.bkp
+prod

@@ -21,3 +21,52 @@ services:
     ports:
       - "15672:15672"
       - "5671:5671"
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  email-producer:
+    image: rmq-notifier:v1
+    build: .
+    command: producer 0.0.0.0:9090
+    environment:
+      CONFIG_FILE: "/etc/rmq-notifier/config.json"
+      AUTH_TOKEN: "****************"
+      EXCHANGE_NAME: "exchangeName"
+    volumes:
+      - "./config.json:/etc/rmq-notifier/config.json:ro"
+      - "./rabbitmq-settings:/app/rabbitmq-settings:ro"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  email-consumer: &consumer
+    image: rmq-notifier:v1
+    build: .
+    command: consumer email
+    environment:
+      CONFIG_FILE: "/etc/rmq-notifier/config.json"
+      EXCHANGE_NAME: "exchangeName"
+      CONSUMER_NAME: email-consumer
+      CONSUMER_QUEUE: email-notification
+      CONSUMER_ROUTING_KEY: email
+      CONSUMER_COUNT: 5
+    volumes:
+      - "./config.json:/etc/rmq-notifier/config.json:ro"
+      - "./rabbitmq-settings:/app/rabbitmq-settings:ro"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+
+  telegram-consumer:
+    <<: *consumer
+    command: consumer telegram
+    environment:
+      CONFIG_FILE: "/etc/rmq-notifier/config.json"
+      EXCHANGE_NAME: "exchangeName"
+      CONSUMER_NAME: telegram-consumer
+      CONSUMER_QUEUE: telegram-notification
+      CONSUMER_ROUTING_KEY: telegram
+      CONSUMER_COUNT: 5
