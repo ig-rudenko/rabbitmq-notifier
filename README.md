@@ -55,6 +55,34 @@ bash rabbit-settings/create-certs.sh 'rabbitHost' 'rabbitUser';
 Через переменную окружения `CONFIG_FILE` можно указать, где искать файл конфигурации,
 по умолчанию - `/etc/rmq-notifier/config.json`
 
+Каждое значение файла конфигурации можно переопределить через переменную окружения. 
+
+Список переменных окружения:
+
+    RABBITMQ_USER
+    RABBITMQ_PASSWORD
+    RABBITMQ_HOST
+    RABBITMQ_PORT
+    RABBITMQ_VHOST
+    RABBITMQ_CACERT
+    RABBITMQ_CERTFILE
+    RABBITMQ_KEYFILE
+    EXCHANGE_NAME
+    EXCHANGE_TYPE
+    CONSUMER_CONNECTION_NAME
+    CONSUMER_ROUTING_KEY
+    CONSUMER_QUEUE
+    CONSUMER_COUNT
+    CONSUMER_PREFETCH_COUNT
+    CONSUMER_EXPIRE_AFTER_SECONDS
+    PRODUCER_AUTH_TOKEN
+
+    # Для email consumer (подключение к почтовому серверу)
+    EMAIL_NOTIFIER_HOST
+    EMAIL_NOTIFIER_PORT
+    EMAIL_NOTIFIER_LOGIN
+    EMAIL_NOTIFIER_PASSWORD
+
 `expireAfterSeconds` указывает время в секундах спустя которое сообщения для consumer будут
 пропущены и помечены как Acknowledge.
 
@@ -96,8 +124,6 @@ resp = requests.post(
 
 ### 2.2. Обработка через consumer
 
-Для запуска **consumer** должны быть указаны все значения в файле конфигурации
-
 
 ```shell
 notifier consumer telegram
@@ -127,13 +153,17 @@ notifier consumer telegram
 ```json
 {
   "sender": "user@mail.com",
-  "to": ["to-user@mail.ru"],
+  "to": [
+    "to-user1@mail.com",
+    "to-user2@mail.com"
+  ],
   "subject": "test",
   "body": "<h1>test</h1>"
 }
 ```
 
-Для работы `email` уведомителя необходимо в файле конфигураций указать настройки для подключения:
+Для работы `email` уведомителя необходимо в файле конфигураций указать настройки для подключения,
+либо через переменные окружения:
 
 ```json
 "emailNotifier": {
@@ -144,6 +174,12 @@ notifier consumer telegram
 }
 ```
 
-## 3. Схема работы
+## 3. Схема работы producer-consumer
 
 ![schema.png](docs/img/schema.png)
+
+## 3. Схема работы only-producer
+
+Producer не проверяет тело сообщения, так что можно передавать любые данные
+
+![schema.png](docs/img/only-producer.png)

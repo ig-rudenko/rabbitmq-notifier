@@ -10,7 +10,7 @@ import (
 
 type NotifierConfig struct {
 	Host     string `json:"host"`
-	Port     uint16 `json:"port"`
+	Port     uint64 `json:"port"`
 	Login    string `json:"login"`
 	Password string `json:"password"`
 }
@@ -37,4 +37,11 @@ func getConfig() *NotifierConfig {
 		log.Fatalln("INVALID CONFIG FILE", err)
 	}
 	return configuration.NotifierConfig
+}
+
+func (c *config) updateFromEnv() {
+	c.Host = misc.GetEnv("EMAIL_NOTIFIER_HOST", c.Host)
+	c.Port = misc.GetUIntEnv("EMAIL_NOTIFIER_PORT", c.Port)
+	c.Login = misc.GetEnv("EMAIL_NOTIFIER_LOGIN", c.Login)
+	c.Password = misc.GetEnv("EMAIL_NOTIFIER_PASSWORD", c.Password)
 }

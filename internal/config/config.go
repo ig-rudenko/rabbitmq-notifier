@@ -57,6 +57,7 @@ func NewConfig() *Config {
 
 	decoder := json.NewDecoder(file)
 
+	// Значения по умолчанию.
 	configuration := Config{
 		Rabbitmq: RabbitMQConfig{
 			Port:  5671,
@@ -78,8 +79,32 @@ func NewConfig() *Config {
 		log.Fatalln("INVALID CONFIG FILE", err)
 	}
 
-	// Переопределяем через переменную окружения.
-	configuration.Producer.AuthToken = misc.GetEnv("PRODUCER_AUTH_TOKEN", configuration.Producer.AuthToken)
+	// Обновляем из переменных окружения.
+	configuration.updateFromEnv()
 
 	return &configuration
+}
+
+func (c *Config) updateFromEnv() {
+	// Переопределяем через переменные окружения.
+	c.Rabbitmq.User = misc.GetEnv("RABBITMQ_USER", c.Rabbitmq.User)
+	c.Rabbitmq.Password = misc.GetEnv("RABBITMQ_PASSWORD", c.Rabbitmq.Password)
+	c.Rabbitmq.Host = misc.GetEnv("RABBITMQ_HOST", c.Rabbitmq.Host)
+	c.Rabbitmq.Port = misc.GetIntEnv("RABBITMQ_PORT", c.Rabbitmq.Port)
+	c.Rabbitmq.Vhost = misc.GetEnv("RABBITMQ_VHOST", c.Rabbitmq.Vhost)
+	c.Rabbitmq.CaCert = misc.GetEnv("RABBITMQ_CACERT", c.Rabbitmq.CaCert)
+	c.Rabbitmq.CertFile = misc.GetEnv("RABBITMQ_CERTFILE", c.Rabbitmq.CertFile)
+	c.Rabbitmq.KeyFile = misc.GetEnv("RABBITMQ_KEYFILE", c.Rabbitmq.KeyFile)
+
+	c.Exchange.Name = misc.GetEnv("EXCHANGE_NAME", c.Exchange.Name)
+	c.Exchange.Type = misc.GetEnv("EXCHANGE_TYPE", c.Exchange.Type)
+
+	c.Consumer.ConnectionName = misc.GetEnv("CONSUMER_CONNECTION_NAME", c.Consumer.ConnectionName)
+	c.Consumer.RoutingKey = misc.GetEnv("CONSUMER_ROUTING_KEY", c.Consumer.RoutingKey)
+	c.Consumer.Queue = misc.GetEnv("CONSUMER_QUEUE", c.Consumer.Queue)
+	c.Consumer.Count = misc.GetIntEnv("CONSUMER_COUNT", c.Consumer.Count)
+	c.Consumer.PrefetchCount = misc.GetIntEnv("CONSUMER_PREFETCH_COUNT", c.Consumer.PrefetchCount)
+	c.Consumer.ExpireAfterSeconds = misc.GetUIntEnv("CONSUMER_EXPIRE_AFTER_SECONDS", c.Consumer.ExpireAfterSeconds)
+
+	c.Producer.AuthToken = misc.GetEnv("PRODUCER_AUTH_TOKEN", c.Producer.AuthToken)
 }
