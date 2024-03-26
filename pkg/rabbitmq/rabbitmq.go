@@ -3,7 +3,6 @@ package rabbitmq
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"os"
@@ -76,7 +75,9 @@ func (r *Rabbit) Connect() error {
 // Connection returns exiting `*amqp.Connection` instance.
 func (r *Rabbit) Connection() (*amqp.Connection, error) {
 	if r.connection == nil || r.connection.IsClosed() {
-		return nil, errors.New("connection to RabbitMQ is not open")
+		if err := r.Connect(); err != nil {
+			return nil, err
+		}
 	}
 
 	return r.connection, nil
