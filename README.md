@@ -1,3 +1,29 @@
+# RMQ Notifier
+
+Утилита для управления очередями сообщений с использованием RabbitMQ
+
+Данный инструмент предназначен для запуска Producer'ов и Consumer'ов в системе RabbitMQ. Он эффективно обрабатывает сообщения, обеспечивая их постепенную передачу для избежания перегрузки и зависания приложений.
+
+Основные возможности:
+
+* Consumer поддерживает отправку уведомлений в Telegram и на Email.
+* Обеспечивает плавную передачу уведомлений без резких всплесков нагрузки.
+* Идеально подходит для асинхронной отправки уведомлений и писем, что помогает улучшить производительность и стабильность ваших приложений.
+* Producer можно использовать для передачи любых сообщений для последующей обработки другими Consumers.
+
+![basic](/docs/img/Basic Usage.png)
+
+
+## Схема работы producer-consumer
+
+![schema.png](docs/img/schema.png)
+
+## Схема работы only-producer
+
+Producer не проверяет тело сообщения, так что можно передавать любые данные
+
+![schema.png](docs/img/only-producer.png)
+
 ## 1. Настройка
 
 ### 1.1. Создание сертификатов
@@ -91,27 +117,25 @@ bash rabbit-settings/create-certs.sh 'rabbitHost' 'rabbitUser';
 
 ### 2.1. Отправка через producer
 
-Запускаем приложение на порту
+Запускаем приложение на конкретном порту
 
 ```shell
 notifier producer 0.0.0.0:9090
 ```
 
-Далее отправляем POST запрос на URL `/<routingKey>`. Пример на python:
+Далее отправляем POST запрос на URL `/<routingKey>`.
 
-```python
-data = { 
+```bash
+curl -X POST "http://localhost:9090/telegram" \
+-H "Authorization: Token ********" \
+-H "Content-Type: application/json" \
+-d '{
   "chatId": 123123123,
   "message": "hello",
   "parseMode": "MarkdownV2",
-  "token": "****",
-}
-routingKey = "telegram"  # Ключ маршрутизации
-resp = requests.post(
-    "http://localhost:9090/" + routingKey,
-    headers={"Authorization": "Token 834932789472389478923"},
-    json=data,
-)
+  "token": "****"
+}'
+
 ```
 
 Каждый запрос должен содержать заголовок с токеном, который указан в файле конфигурации,
@@ -135,7 +159,7 @@ notifier consumer telegram
 
 ### 2.2.1. Telegram
 
-Для уведомителя `telegram` тело сообщения должно быть JSON в формате:
+Для уведомителя `telegram` тело сообщения должно быть в следующем JSON в формате:
 
 ```json
 { 
@@ -148,7 +172,7 @@ notifier consumer telegram
 
 ### 2.2.2. Email
 
-Для уведомителя `email` тело сообщения должно быть JSON в формате:
+Для уведомителя `email` тело сообщения должно быть в следующем JSON в формате:
 
 ```json
 {
@@ -162,24 +186,17 @@ notifier consumer telegram
 }
 ```
 
-Для работы `email` уведомителя необходимо в файле конфигураций указать настройки для подключения,
-либо через переменные окружения:
+> [!IMPORTANT]
+> Для работы `email` уведомителя необходимо в файле конфигураций указать настройки для подключения,
+> либо через переменные окружения:
 
 ```json
-"emailNotifier": {
+{
+  "emailNotifier": {
     "host": "mail.domain",
     "port": 587,
     "login": "user",
     "password": "password"
+  }
 }
 ```
-
-## 3. Схема работы producer-consumer
-
-![schema.png](docs/img/schema.png)
-
-## 3. Схема работы only-producer
-
-Producer не проверяет тело сообщения, так что можно передавать любые данные
-
-![schema.png](docs/img/only-producer.png)
