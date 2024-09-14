@@ -1,5 +1,3 @@
-version: "2.2"
-
 services:
   rabbitmq:
     image: rabbitmq:3.12.12-management-alpine
@@ -15,12 +13,13 @@ services:
     volumes:
       - ./rabbitmq:/var/lib/rabbitmq
       - ./rabbitmq-settings/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+      # Необходимо создать сертификаты для домена и пользователя RabbitMQ
       - ./rabbitmq-settings/root.crt:/etc/ssl/rmq-cacert.pem:ro
       - ./rabbitmq-settings/server.crt:/etc/ssl/rmq-cert.pem:ro
       - ./rabbitmq-settings/server.key:/etc/ssl/rmq-key.pem:ro
     ports:
-      - "15672:15672"
-      - "5671:5671"
+      - "15672:15672"  # Веб панель
+      - "5671:5671"  # AMQP + TLS
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 30s
@@ -28,45 +27,104 @@ services:
       retries: 3
 
   email-producer:
-    image: rmq-notifier:v1
     build: .
+    image: rmq-notifier:v1
     command: producer 0.0.0.0:9090
+    ports:
+      - "9090:9090"
+
     environment:
-      CONFIG_FILE: "/etc/rmq-notifier/config.json"
-      AUTH_TOKEN: "****************"
-      EXCHANGE_NAME: "exchangeName"
+      # Где искать файл конфигурации внутри контейнера.
+      CONFIG_FILE: /etc/rmq-notifier/config.json
+
+      AUTH_TOKEN: insecureToken  # Токен авторизации, который нужно отправлять в HTTP запросе.
+      EXCHANGE_NAME: exchangeName  # RabbitMQ exchange name.
+
+      # Где искать сертификаты внутри контейнера.
+      RABBITMQ_CACERT: /ssl/root.crt
+      RABBITMQ_CERTFILE: /ssl/client.crt
+      RABBITMQ_KEYFILE: /ssl/client.key
+
     volumes:
+      # Можно указать свой файл конфигурации.
       - "./config.json:/etc/rmq-notifier/config.json:ro"
-      - "./rabbitmq-settings:/app/rabbitmq-settings:ro"
+
+      # Указываем необходимые сертификаты только для чтения.
+      - "./rabbitmq-settings/root.crt:/ssl/root.crt:ro"
+      - "./rabbitmq-settings/client.crt:/ssl/client.crt:ro"
+      - "./rabbitmq-settings/client.key:/ssl/client.key:ro"
+
     depends_on:
       rabbitmq:
         condition: service_healthy
 
-  email-consumer: &consumer
-    image: rmq-notifier:v1
+  email-consumer:
     build: .
-    command: consumer email
+    image: rmq-notifier:v1
+    command: consumer email  # Запускаем consumer в режиме email.
     environment:
-      CONFIG_FILE: "/etc/rmq-notifier/config.json"
-      EXCHANGE_NAME: "exchangeName"
-      CONSUMER_NAME: email-consumer
-      CONSUMER_QUEUE: email-notification
+      # Где искать файл конфигурации внутри контейнера.
+      CONFIG_FILE: /etc/rmq-notifier/config.json
+      EXCHANGE_NAME: exchangeName  # RabbitMQ exchange name.
+
+      # Где искать сертификаты внутри контейнера.
+      RABBITMQ_CACERT: /ssl/root.crt
+      RABBITMQ_CERTFILE: /ssl/client.crt
+      RABBITMQ_KEYFILE: /ssl/client.key
+
+      CONSUMER_NAME: email-consumer  # Название не должно повторяться.
+      CONSUMER_QUEUE: email-notification  # Название очереди, которую будет читать Consumer.
+
+      # Ключ маршрутизации для RabbitMQ.
+      # Это и будет URL, по которому Producer нужно отправлять EMAIL оповещения.
       CONSUMER_ROUTING_KEY: email
-      CONSUMER_COUNT: 5
+
+      CONSUMER_COUNT: 5  # Кол-во обработчиков.
+
     volumes:
+      # Можно указать свой файл конфигурации.
       - "./config.json:/etc/rmq-notifier/config.json:ro"
-      - "./rabbitmq-settings:/app/rabbitmq-settings:ro"
+
+      # Указываем необходимые сертификаты только для чтения.
+      - "./rabbitmq-settings/root.crt:/ssl/root.crt:ro"
+      - "./rabbitmq-settings/client.crt:/ssl/client.crt:ro"
+      - "./rabbitmq-settings/client.key:/ssl/client.key:ro"
+
     depends_on:
       rabbitmq:
         condition: service_healthy
+
 
   telegram-consumer:
-    <<: *consumer
-    command: consumer telegram
+    build: .
+    image: rmq-notifier:v1
+    command: consumer telegram  # Запускаем consumer в режиме Telegram.
+
     environment:
-      CONFIG_FILE: "/etc/rmq-notifier/config.json"
-      EXCHANGE_NAME: "exchangeName"
+      # Где искать файл конфигурации внутри контейнера.
+      CONFIG_FILE: /etc/rmq-notifier/config.json
+      EXCHANGE_NAME: exchangeName  # RabbitMQ exchange name.
+
+      # Где искать сертификаты внутри контейнера.
+      RABBITMQ_CACERT: /ssl/root.crt
+      RABBITMQ_CERTFILE: /ssl/client.crt
+      RABBITMQ_KEYFILE: /ssl/client.key
+
       CONSUMER_NAME: telegram-consumer
-      CONSUMER_QUEUE: telegram-notification
-      CONSUMER_ROUTING_KEY: telegram
-      CONSUMER_COUNT: 5
+      CONSUMER_QUEUE: telegram-notification  # Указываем отдельную очередь.
+      CONSUMER_ROUTING_KEY: telegram  # Указываем другой ключ маршрутизации.
+
+      CONSUMER_COUNT: 5  # Кол-во обработчиков.
+
+    volumes:
+      # Можно указать свой файл конфигурации.
+      - "./config.json:/etc/rmq-notifier/config.json:ro"
+
+      # Указываем необходимые сертификаты только для чтения.
+      - "./rabbitmq-settings/root.crt:/ssl/root.crt:ro"
+      - "./rabbitmq-settings/client.crt:/ssl/client.crt:ro"
+      - "./rabbitmq-settings/client.key:/ssl/client.key:ro"
+
+    depends_on:
+      rabbitmq:
+        condition: service_healthy

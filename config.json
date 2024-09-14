@@ -1,8 +1,8 @@
 {
   "rabbitmq": {
-    "user": "user",
-    "password": "password",
-    "host": "domain",
+    "user": "rmuser",
+    "password": "rmpassword",
+    "host": "rabbitmq",
     "port": 5671,
     "vhost": "",
     "cacert": "./rabbitmq-settings/root.crt",

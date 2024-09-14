@@ -23,51 +23,78 @@ Producer не проверяет тело сообщения, так что мо
 
 ![schema.png](docs/img/only-producer.png)
 
+## Быстрый запуск через docker compose
+
+Будут подняты следующие контейнеры:
+
+- RabbitMQ
+- Producer
+- Telegram Consumer
+- Email Consumer
+
+1. Создать сертификаты
+
+    ```shell
+    sudo bash generate-certs.sh 'rabbitmq' 'rmuser';
+    ```
+
+2. Запустить контейнеры
+
+    ```shell
+    sudo docker compose up -d;
+    ```
+
+3. Передать POST запрос на URL `http://localhost:9090/<routingKey>`. Пример для телеграма:
+
+    ```bash
+    curl -X POST "http://localhost:9090/telegram" \
+    -H "Authorization: Token insecureToken" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "chatId": 123123123,
+      "message": "hello",
+      "parseMode": "MarkdownV2",
+      "token": "YOUR_TELEGRAM_TOKEN"
+    }'
+    ```
+
+
 ## 1. Настройка
 
 ### 1.1. Создание сертификатов
 
-
-Для работы библиотеки x509 необходимо настроить `subjectAltName`. Для этого добавьте в файл `/etc/ssl/openssl.conf`
-блок `alt_names` где будут альтернативные домены. Обязательно укажите основной домен, так как subjectAltName
-переопределяет полностью CN.
-
-```ini
-[ alt_names ]
-DNS.1 = server1.example.com
-DNS.2 = mail.example.com
-DNS.3 = www.example.com
-DNS.4 = www.sub.example.com
-DNS.5 = mx.example.com
-DNS.6 = support.example.com
-
-[ v3_ca ]
-# Подключаем
-subjectAltName = @alt_names
-...
-```
-
-Создать файлы сертификатов для сервера и клиента можно через скрипт `rabbit-settings/create-certs.sh`
+Создать файлы сертификатов RabbitMQ для сервера и клиента можно через скрипт `generate-certs.sh`
 
 ```shell
-bash rabbit-settings/create-certs.sh 'rabbitHost' 'rabbitUser';
+sudo bash generate-certs.sh 'rabbitHostDomain' 'rabbitUser';
 ```
 
-Скрипт создаст 5 файлов:
+Чтобы сгенерировать сертификаты для работы `docker compose`, нужно указать:
 
-- `server.key`: Этот файл содержит закрытый ключ (private key) сервера. 
-    Этот ключ используется для подписания запроса на сертификат и для создания подписанного
-    самоподписанного серверного сертификата.
+```shell
+sudo bash generate-certs.sh 'rabbitmq' 'rmuser';
+```
+
+Скрипт создаст 5 файлов, которые будут в папке `rabbitmq-settings`:
+
+<details>
+
+- `server.key`: Этот файл содержит закрытый ключ (private key) сервера.
+  Этот ключ используется для подписания запроса на сертификат и для создания подписанного
+  самоподписанного серверного сертификата.
 - `server.crt`: Самоподписанный серверный сертификат. Этот файл содержит открытый ключ сервера,
-    данные о сервере и подпись, сгенерированную закрытым ключом сервера. Он используется 
-    сервером для установки защищенного соединения.
+  данные о сервере и подпись, сгенерированную закрытым ключом сервера. Он используется
+  сервером для установки защищенного соединения.
 - `root.crt`: Корневой сертификат (cacert). В данном случае, этот файл представляет
-    собой самоподписанный корневой сертификат, который используется для подписи клиентских сертификатов.
-    Этот файл может быть распространен среди клиентов для проверки подлинности сервера.
-- `client.key`: Закрытый ключ (private key) клиента. Этот ключ используется для создания 
-    запроса на подпись сертификата клиента и для создания подписанного клиентского сертификата.
-- `client.crt`: Подписанный клиентский сертификат. Этот файл содержит открытый ключ клиента, 
-    данные о клиенте и подпись, сгенерированную закрытым ключом сервера (root key).
+  собой самоподписанный корневой сертификат, который используется для подписи клиентских сертификатов.
+  Этот файл может быть распространен среди клиентов для проверки подлинности сервера.
+- `client.key`: Закрытый ключ (private key) клиента. Этот ключ используется для создания
+  запроса на подпись сертификата клиента и для создания подписанного клиентского сертификата.
+- `client.crt`: Подписанный клиентский сертификат. Этот файл содержит открытый ключ клиента,
+  данные о клиенте и подпись, сгенерированную закрытым ключом сервера (root key).
+
+</details>
+
 
 Для запуска rabbitmq будут необходимы `server.key`, `server.crt`, `root.crt`.
 
@@ -82,35 +109,40 @@ bash rabbit-settings/create-certs.sh 'rabbitHost' 'rabbitUser';
 
 Каждое значение файла конфигурации можно переопределить через переменную окружения. 
 
-Список переменных окружения:
+Переменные окружения:
 
-    RABBITMQ_USER
-    RABBITMQ_PASSWORD
-    RABBITMQ_HOST
-    RABBITMQ_PORT
-    RABBITMQ_VHOST
-    RABBITMQ_CACERT
-    RABBITMQ_CERTFILE
-    RABBITMQ_KEYFILE
-    EXCHANGE_NAME
-    EXCHANGE_TYPE
-    CONSUMER_CONNECTION_NAME
-    CONSUMER_ROUTING_KEY
-    CONSUMER_QUEUE
-    CONSUMER_COUNT
-    CONSUMER_PREFETCH_COUNT
-    CONSUMER_EXPIRE_AFTER_SECONDS
-    PRODUCER_AUTH_TOKEN
+```shell
+RABBITMQ_USER: # Имя пользователя для подключения к RabbitMQ.
+RABBITMQ_PASSWORD: # Пароль для подключения к RabbitMQ.
+RABBITMQ_HOST: # Хост RabbitMQ сервера.
+RABBITMQ_PORT: # Порт RabbitMQ сервера.
+RABBITMQ_VHOST: # Виртуальный хост RabbitMQ, который будет использоваться.
+RABBITMQ_CACERT: # Путь к файлу корневого сертификата для проверки TLS соединений RabbitMQ.
+RABBITMQ_CERTFILE: # Путь к файлу сертификата клиента для TLS соединений RabbitMQ.
+RABBITMQ_KEYFILE: # Путь к файлу ключа клиента для TLS соединений RabbitMQ.
 
-    # Для email consumer (подключение к почтовому серверу)
-    EMAIL_NOTIFIER_HOST
-    EMAIL_NOTIFIER_PORT
-    EMAIL_NOTIFIER_LOGIN
-    EMAIL_NOTIFIER_PASSWORD
+EXCHANGE_NAME: # Имя обмена RabbitMQ, которое будет использоваться для публикации/подписки на сообщения.
+EXCHANGE_TYPE: # Тип обмена RabbitMQ (например, direct, topic, fanout).
 
-`expireAfterSeconds` указывает время в секундах спустя которое сообщения для consumer будут
-пропущены и помечены как Acknowledge.
+CONSUMER_CONNECTION_NAME: # Имя подключения для consumer.
+CONSUMER_ROUTING_KEY: # Ключ маршрутизации для consumer.
+CONSUMER_QUEUE: # Очередь RabbitMQ, которую будет использовать consumer.
+CONSUMER_COUNT: # Количество экземпляров consumer, которые будут запущены.
 
+# Количество сообщений, которые consumer может забрать из очереди перед подтверждением.
+CONSUMER_PREFETCH_COUNT:
+
+# Время в секундах, через которое сообщения будут помечены как Acknowledge и пропущены, если они не были обработаны.
+CONSUMER_EXPIRE_AFTER_SECONDS:
+
+PRODUCER_AUTH_TOKEN: # Токен авторизации для producer.
+
+# Для email consumer (подключение к почтовому серверу)
+EMAIL_NOTIFIER_HOST: Хост почтового сервера для отправки уведомлений по email.
+EMAIL_NOTIFIER_PORT: Порт почтового сервера.
+EMAIL_NOTIFIER_LOGIN: Логин для подключения к почтовому серверу.
+EMAIL_NOTIFIER_PASSWORD: Пароль для подключения к почтовому серверу.
+```
 
 ## 2. Запуск
 
@@ -134,7 +166,6 @@ curl -X POST "http://localhost:9090/telegram" \
   "parseMode": "MarkdownV2",
   "token": "****"
 }'
-
 ```
 
 Каждый запрос должен содержать заголовок с токеном, который указан в файле конфигурации,
