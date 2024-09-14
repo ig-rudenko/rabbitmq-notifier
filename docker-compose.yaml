@@ -26,7 +26,7 @@ services:
       timeout: 30s
       retries: 3
 
-  email-producer:
+  producer:
     build: .
     image: rmq-notifier:v1
     command: producer 0.0.0.0:9090
