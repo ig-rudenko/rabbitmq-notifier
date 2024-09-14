@@ -11,3 +11,5 @@ prod-config.json
 
 *.drawio.bkp
 prod
+
+release
